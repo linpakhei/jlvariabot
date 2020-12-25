@@ -1,4 +1,4 @@
-package com.jlvariabot.Utils;
+package com.jlvariabot.utils;
 
 public class log {
     public static void info(Object message) {

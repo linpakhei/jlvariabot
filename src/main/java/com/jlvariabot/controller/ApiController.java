@@ -1,7 +1,5 @@
 package com.jlvariabot.controller;
 
-import com.jlvariabot.service.testService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +14,10 @@ public class ApiController {
     @Value("${bot.dev.token}")
     private String devToken;
 
-    @Autowired
-    private testService testService;
 
     @GetMapping("/testing")
     public String greeting(@RequestParam(value = "name", required = false) String name) {
 //        return "prodUserName: " + prodUserName + ", prodToken: " + prodToken;
-        return testService.resource();
+        return "";
     }
 }

@@ -1,7 +1,7 @@
 package com.jlvariabot.service.impl;
 
 import com.jlvariabot.JLVariaBot;
-import com.jlvariabot.service.RockPaperScissorsService;
+import com.jlvariabot.dao.FirebaseDao;
 import com.jlvariabot.service.TicTacToeService;
 import com.jlvariabot.utils.log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,9 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboar
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.lang.Math.toIntExact;
@@ -23,6 +25,8 @@ import static java.lang.Math.toIntExact;
 public class TicTacToeServiceImpl implements TicTacToeService {
     @Autowired
     private JLVariaBot jlVariaBot;
+    @Autowired
+    private FirebaseDao firebaseDao;
 
     private String rockPaperScissorsName = "rockPaperScissors";
 
@@ -127,10 +131,10 @@ public class TicTacToeServiceImpl implements TicTacToeService {
                 // Draw the game board
                 drawGameBoard(chatId, messageId, userOption, gameBoard);
             } else {
-                drawFinish(chatId, messageId, result, gameBoard);
+                drawFinish(chatId, messageId, result, gameBoard, update);
             }
         } else {
-            drawFinish(chatId, messageId, result, gameBoard);
+            drawFinish(chatId, messageId, result, gameBoard, update);
         }
     }
 
@@ -181,22 +185,43 @@ public class TicTacToeServiceImpl implements TicTacToeService {
         }
     }
 
-    private void drawFinish(long chatId, long messageId, String result, String[] gameBoard) {
+    private void drawFinish(long chatId, long messageId, String result, String[] gameBoard, Update update) {
+        String userId = String.valueOf(update.getCallbackQuery().getFrom().getId());
+
         String text = "";
+        Map<String, Object> data = firebaseDao.getGameResultData(userId, "ticTacToe");
+        if(data == null) {
+            data = new HashMap<>();
+            data.put("win", Long.valueOf(0));
+            data.put("draw", Long.valueOf(0));
+            data.put("lose", Long.valueOf(0));
 
-        if("user".equals(result))
+        }
+
+        firebaseDao.addUserData(userId, update);
+
+
+        if("user".equals(result)) {
             text = "You win!";
-        else if("bot".equals(result))
+            data.put("win", ((Long)data.get("win")).intValue() + 1);
+        } else if("bot".equals(result)) {
             text = "Bot win!";
-        else
+            data.put("lose", ((Long)data.get("lose")).intValue() + 1);
+        } else {
             text = "Draw!";
+            data.put("draw", ((Long)data.get("draw")).intValue() + 1);
+        }
 
+        firebaseDao.addGameResultData(userId, data, "ticTacToe");
 
         String gameBoardText =  assignGameBoard(0, gameBoard) + assignGameBoard(1, gameBoard) + assignGameBoard(2, gameBoard) + "\n" +
                 assignGameBoard(3, gameBoard) + assignGameBoard(4, gameBoard) + assignGameBoard(5, gameBoard) + "\n" +
                 assignGameBoard(6, gameBoard) + assignGameBoard(7, gameBoard) + assignGameBoard(8, gameBoard);
 
         text += "\n\n" + gameBoardText;
+        text += "\n\n" + "Win: " + data.get("win") + "\n";
+        text += "Draw: " + data.get("draw") + "\n";
+        text += "Lose: " + data.get("lose") + "\n";
 
         EditMessageText message = new EditMessageText()
                 .setChatId(chatId)

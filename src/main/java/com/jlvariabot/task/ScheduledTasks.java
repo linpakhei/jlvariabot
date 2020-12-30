@@ -25,7 +25,7 @@ public class ScheduledTasks {
     @Value("${bot.dev.testaliveurl}")
     private String devTestAliveUrl;
 
-    @Scheduled(fixedRate = 1800000)
+    @Scheduled(fixedRate = 900000)
     public void testAlive() {
         try {
             URL url = new URL("prod".equals(env) ? prodTestAliveUrl : devTestAliveUrl);

@@ -52,4 +52,9 @@ public class ApiController {
 
         return output;
     }
+
+    @GetMapping("/testAlive")
+    public String testAlive() {
+        return "test alive";
+    }
 }
